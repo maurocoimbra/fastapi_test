@@ -1,4 +1,5 @@
-from fastapi import FastAPI
+from typing import List
+from fastapi import FastAPI, HTTPException
 
 from models.employee import (
     Employee,
@@ -32,15 +33,11 @@ data = [
 
 app = FastAPI()
 
-@app.get("/")
-def index():
-    return {"message": "Hello World"}
-
-@app.get("/employees")
+@app.get("/employees", response_model=List[Employee])
 def get_all():
     return data
 
-@app.get("/employees/{input_employee_id}")
+@app.get("/employees/{input_employee_id}", response_model=Employee)
 def get_employee_path(input_employee_id: str):
     input_employee_id = int(input_employee_id)
 
@@ -48,9 +45,9 @@ def get_employee_path(input_employee_id: str):
         if employee.id == input_employee_id:
             return employee
 
-    return {"message": "Employee not found"}
+    raise HTTPException(status_code=404, detail="Employee not found")
 
-@app.get("/employees/")
+@app.get("/employees/", response_model=Employee)
 def get_employee_query(input_employee_id: str):
     input_employee_id = int(input_employee_id)
 
@@ -58,9 +55,9 @@ def get_employee_query(input_employee_id: str):
         if employee.id == input_employee_id:
             return employee
 
-    return {"message": "Employee not found"}
+    raise HTTPException(status_code=404, detail="Employee not found")
 
-@app.post("/employees")
+@app.post("/employees", response_model=Employee)
 def create_employee(input_employee: EmployeeCreate):
     new_employee_id = max(employee.id for employee in data) + 1
 
@@ -73,12 +70,9 @@ def create_employee(input_employee: EmployeeCreate):
     )
     data.append(new_employee)
     
-    return {
-        "message": "Employee created",
-        "employee": new_employee,
-    }
+    return new_employee
 
-@app.put("/employees/{input_employee_id}")
+@app.put("/employees/{input_employee_id}", response_model=Employee)
 def update_employee(input_employee_id: str, input_employee: EmployeeUpdate):
     input_employee_id = int(input_employee_id)
 
@@ -89,7 +83,7 @@ def update_employee(input_employee_id: str, input_employee: EmployeeUpdate):
             break
 
     if updated_index == None:
-        return {"message": "Employee not found"}
+        raise HTTPException(status_code=404, detail="Employee not found")
     
     updated_employee = Employee(
         id=input_employee_id,
@@ -101,22 +95,16 @@ def update_employee(input_employee_id: str, input_employee: EmployeeUpdate):
 
     data[updated_index] = updated_employee
 
-    return {
-        "message": "Employee updated",
-        "updated_fields": input_employee,
-    }
+    return updated_employee
     
 
-@app.delete("/employees/{input_employee_id}")
+@app.delete("/employees/{input_employee_id}", response_model=Employee)
 def delete_employee(input_employee_id: str):
     input_employee_id = int(input_employee_id)
 
     for index, employee in enumerate(data):
         if input_employee_id == employee.id:
             removed_employee = data.pop(index)
-            return {
-                "message": "Successfully removed employee",
-                "employee": removed_employee
-            }
+            return removed_employee
 
-    return {"message": "Employee not found"}
+    raise HTTPException(status_code=404, detail="Employee not found")
