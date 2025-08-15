@@ -34,36 +34,36 @@ def index():
 def get_all():
     return data
 
-@app.get("/employees/{employee_id}")
-def get_employee_path(employee_id: str):
-    employee_id = int(employee_id)
+@app.get("/employees/{input_employee_id}")
+def get_employee_path(input_employee_id: str):
+    input_employee_id = int(input_employee_id)
 
     for employee in data:
-        if employee["id"]== employee_id:
+        if employee["id"] == input_employee_id:
             return employee
 
     return {"message": "Employee not found"}
 
 @app.get("/employees/")
-def get_employee_query(employee_id: str):
-    employee_id = int(employee_id)
+def get_employee_query(input_employee_id: str):
+    input_employee_id = int(input_employee_id)
 
     for employee in data:
-        if employee["id"]== employee_id:
+        if employee["id"] == input_employee_id:
             return employee
 
     return {"message": "Employee not found"}
 
 @app.post("/employees")
-def create_employee(employee: dict):
+def create_employee(input_employee: dict):
     new_employee_id = max(employee["id"] for employee in data) + 1
 
     new_employee = {
         "id": new_employee_id,
-        "name": employee["name"],
-        "gender": employee["gender"],
-        "salary": employee["salary"],
-        "address": employee["address"],
+        "name": input_employee["name"],
+        "gender": input_employee["gender"],
+        "salary": input_employee["salary"],
+        "address": input_employee["address"],
     }
     data.append(new_employee)
     
@@ -72,10 +72,45 @@ def create_employee(employee: dict):
         "employee": new_employee,
     }
 
-@app.put("/employees/{employee_id}")
-def update_employee(employee_id: str):
-    pass
+@app.put("/employees/{input_employee_id}")
+def update_employee(input_employee_id: str, input_employee: dict):
+    input_employee_id = int(input_employee_id)
 
-@app.delete("employees/{employee_id}")
-def delete_employee(employee_id: str):
-    pass
+    updated_index = None
+    for index, employee in enumerate(data):
+        if employee["id"] == input_employee_id:
+            updated_index = index
+            break
+
+    if updated_index == None:
+        return {"message": "Employee not found"}
+    
+    updated_employee = {
+        "id": input_employee_id,
+        "name": input_employee.get("name", data[updated_index]["name"]),
+        "gender": input_employee.get("gender", data[updated_index]["gender"]),
+        "salary": input_employee.get("salary", data[updated_index]["salary"]),
+        "address": input_employee.get("address", data[updated_index]["address"]),
+    }
+
+    data[updated_index] = updated_employee
+
+    return {
+        "message": "Employee updated",
+        "updated_fields": input_employee,
+    }
+    
+
+@app.delete("/employees/{input_employee_id}")
+def delete_employee(input_employee_id: str):
+    input_employee_id = int(input_employee_id)
+
+    for index, employee in enumerate(data):
+        if input_employee_id == employee["id"]:
+            removed_employee = data.pop(index)
+            return {
+                "message": "Successfully removed employee",
+                "employee": removed_employee
+            }
+
+    return {"message": "Employee not found"}
